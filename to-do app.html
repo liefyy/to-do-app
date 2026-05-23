@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>focus — minimal tasks</title>
+    <style>
+        /* ==========================================================================
+           1. CSS VARIABLES & THEME ENGINE
+           ========================================================================== */
+        :root {
+            /* Light Theme Palette */
+            --bg-color: #FAFAFA;
+            --text-primary: #1A1A1A;
+            --text-secondary: #757575;
+            --text-muted: #B0B0B0;
+            --border-color: #EDEDED;
+            
+            --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --max-width: 480px;
+        }
+
+        /* Dark Theme Palette Extensions */
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --text-primary: #EAEAEA;
+            --text-secondary: #909090;
+            --text-muted: #555555;
+            --border-color: #222222;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-stack);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            display: flex;
+            justify-content: center;
+            padding: 12vh 24px 48px 24px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* ==========================================================================
+           2. LAYOUT CONTAINER & HEADER ELEMENTS
+           ========================================================================== */
+        main {
+            width: 100%;
+            max-width: var(--max-width);
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .header-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: -0.03em;
+            color: var(--text-primary);
+        }
+
+        .stats-bar {
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+            letter-spacing: 0.02em;
+        }
+
+        /* Minimalistic Theme Mode Toggle Switch */
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 400;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 4px;
+            transition: var(--transition-smooth);
+        }
+
+        .theme-toggle:hover {
+            color: var(--text-primary);
+            background-color: var(--border-color);
+        }
+
+        /* ==========================================================================
+           3. INTERACTIVE COMPONENTS (INPUT & STATS)
+           ========================================================================== */
+        .input-group {
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition-smooth);
+        }
+
+        .input-group:focus-within {
+            border-color: var(--text-primary);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            height: 56px;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 1.05rem;
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        input[type="text"]::placeholder {
+            color: var(--text-muted);
+            font-weight: 300;
+        }
+
+        .btn-add {
+            background: none;
+            border: none;
+            height: 44px;
+            width: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 200;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            border-radius: 50%;
+        }
+
+        .btn-add:hover {
+            color: var(--text-primary);
+            background-color: var(--border-color);
+        }
+
+        /* ==========================================================================
+           4. TASK LIST & ITEMS
+           ========================================================================== */
+        section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+        }
+
+        li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 52px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+        }
+
+        li.fade-out {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+
+        li.fade-in {
+            animation: fadeIn 0.3s forwards cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .task-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .checkbox-wrapper {
+            position: relative;
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        .checkmark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 20px;
+            width: 20px;
+            border: 1px solid var(--text-muted);
+            border-radius: 50%;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .checkmark::after {
+            content: "✓";
+            font-size: 0.7rem;
+            color: var(--bg-color); /* Matches active theme container canvas */
+            display: none;
+        }
+
+        .task-left:hover .checkmark {
+            border-color: var(--text-primary);
+        }
+
+        .checkbox-wrapper input:checked ~ .checkmark {
+            background-color: var(--text-primary);
+            border-color: var(--text-primary);
+        }
+
+        .checkbox-wrapper input:checked ~ .checkmark::after {
+            display: block;
+        }
+
+        .task-text {
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--text-primary);
+            line-height: 1.4;
+            transition: var(--transition-smooth);
+            user-select: none;
+        }
+
+        li.completed .task-text {
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+
+        li.completed .checkmark {
+            background-color: transparent;
+            border-color: var(--border-color);
+        }
+
+        li.completed .checkbox-wrapper input:checked ~ .checkmark::after {
+            color: var(--text-muted);
+            display: block;
+        }
+
+        .btn-delete {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: var(--transition-smooth);
+            border-radius: 50%;
+        }
+
+        li:hover .btn-delete,
+        li:focus-within .btn-delete {
+            opacity: 1;
+        }
+
+        .btn-delete:hover {
+            color: #D93838;
+            background-color: rgba(217, 56, 56, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 6vh;
+            }
+            .btn-delete {
+                opacity: 0.4;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <main>
+        <header>
+            <div class="header-meta">
+                <h1>focus</h1>
+                <div class="stats-bar" id="stats-display" aria-live="polite">0 active / 0 done</div>
+            </div>
+            <button class="theme-toggle" id="theme-toggle-btn" aria-label="Toggle visual theme">dark</button>
+        </header>
+
+        <section class="interaction-zone">
+            <div class="input-group">
+                <input type="text" id="task-input" placeholder="Add a task..." autocomplete="off" maxlength="120">
+                <button class="btn-add" id="btn-add-submit" aria-label="Add task">+</button>
+            </div>
+        </section>
+
+        <section class="list-zone">
+            <ul id="task-list"></ul>
+        </section>
+    </main>
+
+    <script>
+        /* ==========================================================================
+           5. APPLICATION LOGIC & THEME EXECUTION ENGINE
+           ========================================================================== */
+
+        let tasks = [];
+
+        const taskInput = document.getElementById('task-input');
+        const btnAddSubmit = document.getElementById('btn-add-submit');
+        const taskList = document.getElementById('task-list');
+        const statsDisplay = document.getElementById('stats-display');
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+
+        /**
+         * Initialize application state, cache data engines, and preference branches
+         */
+        function init() {
+            // Task State Hydration
+            const savedTasks = localStorage.getItem('focus_tasks');
+            if (savedTasks) {
+                try { tasks = JSON.parse(savedTasks); } catch (e) { tasks = []; }
+            }
+
+            // Theme Preferences Calibration
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const savedTheme = localStorage.getItem('focus_theme');
+            
+            if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+                setTheme('dark');
+            } else {
+                setTheme('light');
+            }
+
+            render();
+        }
+
+        /**
+         * Orchestrates theme toggling state updates
+         */
+        function setTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeToggleBtn.textContent = 'light';
+                localStorage.setItem('focus_theme', 'dark');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                themeToggleBtn.textContent = 'dark';
+                localStorage.setItem('focus_theme', 'light');
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            if (currentTheme === 'dark') {
+                setTheme('light');
+            } else {
+                setTheme('dark');
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem('focus_tasks', JSON.stringify(tasks));
+        }
+
+        function handleAddTask() {
+            const text = taskInput.value.trim();
+            if (!text) return;
+
+            const newTask = {
+                id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+                text: text,
+                completed: false,
+                timestamp: Date.now()
+            };
+
+            tasks.unshift(newTask);
+            saveState();
+            
+            taskInput.value = '';
+            render(newTask.id);
+        }
+
+        function toggleTask(id) {
+            tasks = tasks.map(task => {
+                if (task.id === id) {
+                    return { ...task, completed: !task.completed };
+                }
+                return task;
+            });
+            
+            tasks.sort((a, b) => a.completed - b.completed);
+            saveState();
+            render();
+        }
+
+        function deleteTask(id, element) {
+            element.classList.add('fade-out');
+            element.addEventListener('transitionend', () => {
+                tasks = tasks.filter(task => task.id !== id);
+                saveState();
+                render();
+            }, { once: true });
+        }
+
+        function updateCounters() {
+            const activeCount = tasks.filter(t => !t.completed).length;
+            const doneCount = tasks.filter(t => t.completed).length;
+            statsDisplay.textContent = `${activeCount} active / ${doneCount} done`;
+        }
+
+        function render(newlyAddedId = null) {
+            taskList.innerHTML = '';
+
+            if (tasks.length === 0) {
+                updateCounters();
+                return;
+            }
+
+            tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.id = `task-${task.id}`;
+                if (task.completed) li.classList.add('completed');
+                if (task.id === newlyAddedId) li.classList.add('fade-in');
+
+                li.innerHTML = `
+                    <div class="task-left">
+                        <label class="checkbox-wrapper" data-id="${task.id}">
+                            <input type="checkbox" ${task.completed ? 'checked' : ''}>
+                            <span class="checkmark"></span>
+                        </label>
+                        <span class="task-text">${escapeHTML(task.text)}</span>
+                    </div>
+                    <button class="btn-delete" aria-label="Delete task" data-id="${task.id}">×</button>
+                `;
+
+                const taskLeftZone = li.querySelector('.task-left');
+                taskLeftZone.addEventListener('click', (e) => {
+                    e.preventDefault(); 
+                    toggleTask(task.id);
+                });
+
+                const deleteBtn = li.querySelector('.btn-delete');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteTask(task.id, li);
+                });
+
+                taskList.appendChild(li);
+            });
+
+            updateCounters();
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+
+        /* ==========================================================================
+           6. EVENT REGISTRATION LAYER
+           ========================================================================== */
+        themeToggleBtn.addEventListener('click', toggleTheme);
+        btnAddSubmit.addEventListener('click', handleAddTask);
+        
+        taskInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleAddTask();
+        });
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
